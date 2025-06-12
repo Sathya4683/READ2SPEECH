@@ -2,7 +2,7 @@ from fastapi import APIRouter,Depends,status
 from fastapi.responses import JSONResponse
 from schemas import req_schema,res_schema
 from oauth2 import get_current_user
-import database
+from database import get_mongo_db, create_user, settings_toggle, delete_user, insert_links
 
 router = APIRouter(
     prefix="/api/users",
@@ -13,9 +13,9 @@ router = APIRouter(
 @router.post("/settings")
 def user_settings(
     pref: req_schema.SetPreferences,
-    user_token: req_schema.TokenData = Depends(get_current_user)
+    user_token: req_schema.TokenData = Depends(get_current_user),db=Depends(get_mongo_db)
 ):
-    success = database.settings_toggle(user_token.email, pref.mails)
+    success = settings_toggle(user_token.email, pref.mails,db)
 
     if success:
         return JSONResponse(
@@ -37,9 +37,9 @@ def user_settings(
 
 #post the link from the browser extension into the links collection
 @router.post("/add", response_model=res_schema.LinkSaved)
-def add_website(save_link: req_schema.Link, user_token: req_schema.TokenData = Depends(get_current_user)):
+def add_website(save_link: req_schema.Link, user_token: req_schema.TokenData = Depends(get_current_user),db=Depends(get_mongo_db)):
     
-    if database.insert_links(id=user_token.user_id, username=user_token.email, link=save_link.url):
+    if insert_links(id=user_token.user_id, username=user_token.email, link=save_link.url,db=db):
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,
             content={
