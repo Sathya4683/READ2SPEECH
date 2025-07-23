@@ -12,7 +12,8 @@ app = FastAPI()
 # ----------------- Settings -----------------
 SECRET_KEY = "secret"
 ALGORITHM = "HS256"
-AUDIO_FOLDER = r"H:\W_PROJECTS\READ2SPEECH\backend\audio"
+AUDIO_FOLDER = r"E:\CODE\READ2SPEECH\backend\audio"
+
 AUDIO_FOLDER = os.path.normpath(AUDIO_FOLDER)
 
 # ----------------- CORS for frontend access -----------------
