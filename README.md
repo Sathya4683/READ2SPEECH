@@ -18,6 +18,8 @@ Read2Speech is a web application that converts articles from URLs into audiobook
 
 ## Architecture Overview
 
+![Architecture](assets/architecture.png)
+
 ### Redis Streams
 
 Redis Streams is used as a high-performance message queue to handle incoming user requests. It supports ordered message storage, consumer groups for scaling, and persistence. When a user submits an article link, the backend pushes a message into a Redis stream that Celery workers consume for processing.
@@ -34,6 +36,12 @@ MongoDB stores two main collections:
 - **Tasks collection**: Tracks each audiobook generation task, including status (`pending`, `processing`, `completed`, or `failed`), timestamps, and output file paths.
 
 MongoDB’s flexible, JSON-like schema allows easy updates and additions of new fields without complex migrations.
+
+---
+
+## Frontend Sample
+
+![Frontend Sample](assets/frontendsample.png)
 
 ---
 
