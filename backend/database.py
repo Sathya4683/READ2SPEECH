@@ -1,76 +1,84 @@
-from pymongo import MongoClient
-from utils import hash,verify
-from fastapi import Depends
 import os
+from pymongo import MongoClient
+from utils import hash, verify
+from fastapi import Depends
+from datetime import datetime
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 client = MongoClient(MONGO_URI)
 
-db = client["readtospeech"]
+db = client["read2speech"]  # make sure db name matches your worker too
 
-#dependency
+
+# Dependency for FastAPI
 def get_mongo_db():
     return db
 
 
+# User CRUD
 
-#CRUD
-
-#first time user creation.. signup probably can be used
-def create_user(username: str, password: str, db) -> bool:
+def create_user(username: str, password: str, email: str, db) -> bool:
     user = {
         "username": username,
-        "password": hash(password),
-        "send_mail": False
+        "password_hash": hash(password),
+        "email": email,
+        "send_mail": False,
+        "created_at": datetime.utcnow(),
     }
     db.users.insert_one(user)
     return True
 
 
-#delete user entirely from the collection... have to also delete links related to the deleted user (smth like cascade delete)
 def delete_user(username: str, password: str, db) -> bool:
     user = db.users.find_one({"username": username})
     if not user:
         return False
-    if not verify(password, user["password"]):
+    if not verify(password, user["password_hash"]):
         return False
 
-    db.links.delete_many({"username": username})  # cascade delete user's links
+    # Cascade delete tasks for this user
+    db.tasks.delete_many({"username": username})
     result = db.users.delete_one({"_id": user["_id"]})
     return result.deleted_count == 1
 
-#add the links along with username, user_id embedded in the JWT and store in links collection
-def insert_links(id: int, username: str, link: str, db) -> bool:
-    payload = {
-        "user_id": id,
+
+# Task CRUD
+
+def insert_task(username: str, link: str, db) -> bool:
+    task = {
         "username": username,
-        "link": link
+        "link": link,
+        "status": "pending",
+        "created_at": datetime.utcnow(),
+        "completed_at": None,
+        "output_file": None,
     }
-    db.links.insert_one(payload)
+    db.tasks.insert_one(task)
     return True
 
 
-#from the UI... ask the user to toggle whether they want notifications (have to create a button or smth ig in frontend ig)
+# User settings toggle for email notifications
+
 def settings_toggle(username: str, toggle: bool, db) -> bool:
     result = db.users.update_one(
         {"username": username},
-        {"$set": {"send_mail": toggle}}
+        {"$set": {"send_mail": toggle}},
     )
     return result.modified_count == 1
 
 
+if __name__ == "__main__":
+    print("Running basic tests...")
 
-if __name__=="__main__":
+    # Example usage (you can uncomment and test)
+    # if create_user("john_doe", "securepassword", "john@example.com", db):
+    #     print("User created")
 
-    print("tests?")
-    # post={"name":'chiiga',"age":123}
-    # posts=db.posts  #posts is the collection
-    # post_id=posts.insert_one(post).inserted_id
+    # if insert_task("john_doe", "https://example.com/article", db):
+    #     print("Task inserted")
 
-    # print(post_id)
+    # if settings_toggle("john_doe", True, db):
+    #     print("Settings toggled")
 
-    # if create_user("nig@gmail.com","hello123"):
-    #     print("user has been created lol")
-    
-    # if delete_user("nig@gmail.com","hello123"):
-    #     print("user has been deleted lmao")
+    # if delete_user("john_doe", "securepassword", db):
+    #     print("User deleted")
