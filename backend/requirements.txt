@@ -1,2 +1,12 @@
-fastapi[all]
-python-jose[cryptography]
+celery[redis]==5.3.0
+motor==3.1.1
+redis==5.0.0
+httpx==0.24.1
+beautifulsoup4==4.12.2
+requests==2.31.0
+langchain==0.0.232
+langchain-google-genai==0.1.7
+gTTS==2.3.0
+python-dotenv==1.0.0
+python-jose==3.3.0
+fastapi[all]==0.100.0
